@@ -1,2 +1,6 @@
 .venv/
-
+.env
+.env.docker
+.env.production
+__pycache__/
+*.pyc

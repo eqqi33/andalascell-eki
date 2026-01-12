@@ -1,0 +1,30 @@
+{% extends "admin/change_list.html" %}
+
+{% load i18n %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        th.column-stok_display,
+        td.field-stok_display {
+            text-align: center;
+        }
+
+        td.field-stok_display > * {
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+{% endblock %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    {% if export_url %}
+        <div class="flex flex-row items-center">
+            <a href="{{ export_url }}"
+               class="bg-primary-600 border border-transparent cursor-pointer flex font-medium items-center justify-center px-3 py-2 rounded-default shadow-xs text-sm text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600">
+                {% trans "Export Excel" %}
+            </a>
+        </div>
+    {% endif %}
+{% endblock %}

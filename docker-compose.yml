@@ -10,8 +10,10 @@ services:
     env_file:
       - .env.docker
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   db:
     image: postgres:16
@@ -21,6 +23,11 @@ services:
       POSTGRES_DB: andalas_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -33,5 +40,23 @@ services:
     ports:
       - "6379:6379"
 
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: andalas_pgadmin
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "5050:80"
+    env_file:
+      - .env.docker
+    environment:
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./docker/pgadmin/pgpassfile:/var/lib/pgadmin/pgpassfile:ro
+
 volumes:
   postgres_data:
+  pgadmin_data:

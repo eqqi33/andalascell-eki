@@ -1,0 +1,200 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: andalas_cell_test\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-11 07:09+0000\n"
+"PO-Revision-Date: 2026-01-11 00:00+0000\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: templates/admin/index.html:5
+msgid "Django site admin"
+msgstr "Admin situs Django"
+
+#: templates/admin/index.html:20 templates/admin/index.html:21
+msgid "Reports"
+msgstr "Laporan"
+
+msgid "Reports & Lists"
+msgstr "Laporan & Daftar"
+
+msgid "Product list"
+msgstr "Daftar Produk"
+
+#: templates/admin/index.html:28
+msgid "Products"
+msgstr "Produk"
+
+#: templates/admin/index.html:33 templates/admin/index.html:48
+msgid "View"
+msgstr "Lihat"
+
+#: templates/admin/index.html:43
+msgid "Stock Card"
+msgstr "Kartu Stok"
+
+# Unfold common UI
+# Unfold common UI (strings used in Unfold templates)
+msgid "Add row"
+msgstr "Tambah baris"
+
+msgid "All applications"
+msgstr "Semua aplikasi"
+
+msgid "Apply Filters"
+msgstr "Terapkan filter"
+
+msgid "Clear all filters"
+msgstr "Hapus semua filter"
+
+msgid "Click to download"
+msgstr "Klik untuk mengunduh"
+
+msgid "Dark"
+msgstr "Gelap"
+
+msgid "Expand row"
+msgstr "Perluas baris"
+
+msgid "False"
+msgstr "Tidak"
+
+msgid "Filters"
+msgstr "Filter"
+
+msgid "General"
+msgstr "Umum"
+
+msgid "Go back"
+msgstr "Kembali"
+
+msgid "Hide counts"
+msgstr "Sembunyikan jumlah"
+
+msgid "Light"
+msgstr "Terang"
+
+msgid "Loading more results..."
+msgstr "Memuat hasil lainnya..."
+
+msgid "Log in again"
+msgstr "Masuk lagi"
+
+msgid "More actions"
+msgstr "Aksi lainnya"
+
+msgid "Next"
+msgstr "Berikutnya"
+
+msgid "No data"
+msgstr "Tidak ada data"
+
+msgid "No recent searches"
+msgstr "Tidak ada pencarian terbaru"
+
+msgid "No results found"
+msgstr "Tidak ada hasil"
+
+msgid "No results matching your query"
+msgstr "Tidak ada hasil yang cocok dengan pencarian Anda"
+msgid "Previous"
+msgstr "Sebelumnya"
+
+msgid "Recent searches"
+msgstr "Pencarian terbaru"
+
+msgid "Record picture"
+msgstr "Rekam gambar"
+
+msgid "Remove"
+msgstr "Hapus"
+
+msgid "Reset filters"
+msgstr "Reset filter"
+
+msgid "Run"
+msgstr "Jalankan"
+
+msgid "Show counts"
+msgstr "Tampilkan jumlah"
+
+msgid "System"
+msgstr "Sistem"
+
+msgid "Thanks for spending some quality time with the web site today."
+msgstr "Terima kasih sudah meluangkan waktu di situs ini hari ini."
+
+msgid ""
+"This page yielded into no results. Create a new item or reset your "
+"filters."
+msgstr ""
+"Halaman ini tidak menghasilkan data. Buat data baru atau reset filter "
+"Anda."
+
+msgid "True"
+msgstr "Ya"
+
+msgid "Type to search"
+msgstr "Ketik untuk mencari"
+
+msgid "Unknown"
+msgstr "Tidak diketahui"
+
+msgid "View on site"
+msgstr "Lihat di situs"
+
+msgid "You have been successfully logged out from the administration"
+msgstr "Anda berhasil keluar dari halaman administrasi"
+
+# Unfold blocktranslate (variables / plural)
+msgid "Models in the %(name)s application"
+msgstr "Model pada aplikasi %(name)s"
+
+msgid "Sorting priority: %(priority_number)s"
+msgstr "Prioritas pengurutan: %(priority_number)s"
+
+msgid "Found %(counter)s result in %(time)s seconds"
+msgid_plural "Found %(counter)s results in %(time)s seconds"
+msgstr[0] "Ditemukan %(counter)s hasil dalam %(time)s detik"
+
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] "Silakan perbaiki kesalahan berikut."
+
+msgid "%(counter)s result"
+msgid_plural "%(counter)s results"
+msgstr[0] "%(counter)s hasil"
+
+msgid "%(full_result_count)s total"
+msgstr "Total %(full_result_count)s"
+
+msgid "Add %(name)s"
+msgstr "Tambah %(name)s"
+
+msgid "Select all %(total_count)s %(module_name)s"
+msgstr "Pilih semua %(total_count)s %(module_name)s"
+
+msgid "entry"
+msgid_plural "entries"
+msgstr[0] "entri"
+
+msgid "By %(filter_title)s"
+msgstr "Berdasarkan %(filter_title)s"
+
+msgid "Change selected %(model)s"
+msgstr "Ubah %(model)s yang dipilih"
+
+msgid "Add another %(model)s"
+msgstr "Tambah %(model)s lain"
+
+msgid "View selected %(model)s"
+msgstr "Lihat %(model)s yang dipilih"
+
+msgid "Delete selected %(model)s"
+msgstr "Hapus %(model)s yang dipilih"
+
+msgid "Remove from sorting"
+msgstr "Hapus dari pengurutan"

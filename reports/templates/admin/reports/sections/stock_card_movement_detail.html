@@ -1,0 +1,50 @@
+{% load i18n %}
+
+<div class="p-4 lg:p-6 bg-white dark:bg-base-900 border border-base-200 dark:border-base-800 rounded-default">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+            <div class="text-xs uppercase text-base-500">{% trans "Tanggal" %}</div>
+            <div class="font-medium text-base-900 dark:text-base-100">{{ instance.created_at|date:"Y-m-d H:i" }}</div>
+        </div>
+
+        <div>
+            <div class="text-xs uppercase text-base-500">{% trans "Invoice" %}</div>
+            <div class="font-medium text-base-900 dark:text-base-100">{{ instance.invoice_id }}</div>
+        </div>
+
+        <div>
+            <div class="text-xs uppercase text-base-500">{% trans "Gudang" %}</div>
+            <div class="font-medium text-base-900 dark:text-base-100">{{ instance.warehouse }}</div>
+        </div>
+
+        <div>
+            <div class="text-xs uppercase text-base-500">{% trans "Produk" %}</div>
+            <div class="font-medium text-base-900 dark:text-base-100">{{ instance.product.sku }} — {{ instance.product.name }}</div>
+        </div>
+
+        <div>
+            <div class="text-xs uppercase text-base-500">{% trans "Tipe" %}</div>
+            <div class="font-medium text-base-900 dark:text-base-100">{{ instance.get_movement_type_display }}</div>
+        </div>
+
+        <div>
+            <div class="text-xs uppercase text-base-500">{% trans "Qty" %}</div>
+            <div class="font-medium text-base-900 dark:text-base-100">{{ instance.qty }}</div>
+        </div>
+
+        <div>
+            <div class="text-xs uppercase text-base-500">{% trans "Masuk" %}</div>
+            <div class="font-medium text-base-900 dark:text-base-100">{{ instance.in_qty }}</div>
+        </div>
+
+        <div>
+            <div class="text-xs uppercase text-base-500">{% trans "Keluar" %}</div>
+            <div class="font-medium text-base-900 dark:text-base-100">{{ instance.out_qty }}</div>
+        </div>
+
+        <div>
+            <div class="text-xs uppercase text-base-500">{% trans "Saldo Berjalan" %}</div>
+            <div class="font-semibold text-base-900 dark:text-base-100">{{ instance.running_balance }}</div>
+        </div>
+    </div>
+</div>

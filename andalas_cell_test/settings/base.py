@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+from django.utils.translation import gettext_lazy as _
+
 
 def _env_bool(name: str, default: bool = False) -> bool:
     value = os.environ.get(name)
@@ -30,11 +32,18 @@ def _env_csv(name: str, default: list[str] | None = None) -> list[str]:
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
+# Permissions / access control
+STOCK_MOVEMENT_AUDIT_GROUP = os.environ.get(
+    "STOCK_MOVEMENT_AUDIT_GROUP", "Auditor Persediaan"
+)
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+# Production settings override this to enforce that DJANGO_SECRET_KEY is set.
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insecure-secret-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _env_bool("DJANGO_DEBUG", default=False)
@@ -45,17 +54,30 @@ ALLOWED_HOSTS = _env_csv("DJANGO_ALLOWED_HOSTS", default=[])
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',
+    'unfold.contrib.filters',
+    'crispy_forms',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'master.apps.MasterConfig',
+    'inventory',
+    'reports',
 ]
+
+
+# Crispy Forms (Unfold template pack)
+CRISPY_TEMPLATE_PACK = "unfold_crispy"
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["unfold_crispy"]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -68,7 +90,7 @@ ROOT_URLCONF = 'andalas_cell_test.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -120,9 +142,18 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'id'
 
-TIME_ZONE = 'UTC'
+LANGUAGES = [
+    ("id", "Bahasa Indonesia"),
+    ("en", "English"),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / "locale",
+]
+
+TIME_ZONE = 'Asia/Jakarta'
 
 USE_I18N = True
 
@@ -139,3 +170,72 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Unfold (admin theme)
+UNFOLD = {
+    "SITE_TITLE": "Single Warehouse",
+    "SITE_HEADER": "Single Warehouse",
+    "SHOW_LANGUAGES": True,
+    "LANGUAGE_FLAGS": {
+        "id": "ID",
+        "en": "EN",
+    },
+    "SIDEBAR": {
+        "show_search": True,  # Search in applications and models names
+        "command_search": True,  # Replace the sidebar search with the command search
+        "show_all_applications": False,
+        "navigation": [
+            {
+                "title": _("Master Data"),
+                "collapsible": True,
+                "items": [
+                    {"title": _("Produk"), "link": "/admin/master/product/"},
+                    {
+                        "title": _("Kategori"),
+                        "link": "/admin/master/productcategory/",
+                    },
+                    {
+                        "title": _("Satuan"),
+                        "link": "/admin/master/unitofmeasure/",
+                    },
+                    {"title": _("Stok"), "link": "/admin/master/stockbalance/"},
+                ],
+            },
+            {
+                "title": _("Transaksi Persediaan"),
+                "collapsible": True,
+                "items": [
+                    {"title": _("Stok Masuk"), "link": "/admin/inventory/stockin/"},
+                    {
+                        "title": _("Pergerakan Stok"),
+                        "link": "/admin/inventory/stockmovement/",
+                        "permission": "inventory.permissions.can_view_stock_movement",
+                    },
+                    {
+                        "title": _("Aktivitas Stok"),
+                        "link": "/admin/master/activitylog/",
+                        "permission": "master.permissions.can_view_activity_log",
+                    },
+                    {"title": _("Stok Keluar"), "link": "/admin/inventory/stockout/"},
+                ],
+            },
+            {
+                "title": _("Laporan & Daftar"),
+                "collapsible": True,
+                "items": [
+                    {"title": _("Daftar Produk"), "link": "/admin/reports/products/"},
+                    {"title": _("Kartu Stok Produk"), "link": "/admin/reports/stock-card/"},
+                ],
+            },
+            {
+                "title": _("Authentication and Authorization"),
+                "collapsible": True,
+                "items": [
+                    {"title": _("Groups"), "link": "/admin/auth/group/"},
+                    {"title": _("Users"), "link": "/admin/auth/user/"},
+                ],
+            },
+        ],
+    },
+}

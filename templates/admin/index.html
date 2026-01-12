@@ -1,0 +1,59 @@
+{% extends 'admin/base.html' %}
+
+{% load i18n %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col lg:flex-row lg:gap-8">
+        <div class="grow">
+            {% include "unfold/helpers/app_list_default.html" %}
+
+            <div class="app-reports module">
+                <div class="bg-base-50 mb-6 rounded-default p-3 dark:bg-base-800">
+                    <table class="border border-base-400/10 border-spacing-none border-separate rounded-default overflow-hidden shadow-xs w-full dark:border-base-800">
+                        <caption class="font-semibold mb-3 text-base-900 text-left dark:text-base-100">
+                            {% trans "Reports & Lists" %}
+                        </caption>
+
+                        <tr class="bg-white dark:bg-base-900">
+                            <th scope="row" class="font-normal p-3 text-left border-b border-base-100 dark:border-base-800">
+                                <a href="{% url 'admin_reports_products' %}">
+                                    {% trans "Product list" %}
+                                </a>
+                            </th>
+                            <td class="border-b border-base-100 dark:border-base-800 p-3 text-right">
+                                <div class="flex flex-row items-center ml-auto gap-4 justify-end">
+                                    <a href="{% url 'admin_reports_products' %}" class="changelink block leading-none text-base-400 transition-colors dark:text-base-300" title="{% trans 'View' %}">
+                                        <span class="material-symbols-outlined">visibility</span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr class="bg-white dark:bg-base-900">
+                            <th scope="row" class="font-normal p-3 text-left">
+                                <a href="{% url 'admin_reports_stock_card' %}">
+                                    {% trans "Stock Card" %}
+                                </a>
+                            </th>
+                            <td class="p-3 text-right">
+                                <div class="flex flex-row items-center ml-auto gap-4 justify-end">
+                                    <a href="{% url 'admin_reports_stock_card' %}" class="changelink block leading-none text-base-400 transition-colors dark:text-base-300" title="{% trans 'View' %}">
+                                        <span class="material-symbols-outlined">visibility</span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% include "unfold/helpers/history.html" %}
+    </div>
+{% endblock %}

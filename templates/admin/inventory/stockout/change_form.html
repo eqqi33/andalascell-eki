@@ -1,0 +1,32 @@
+{% extends "admin/change_form.html" %}
+
+{#
+  StockOut: show inline items first, then the note field.
+  We do this by rendering inlines inside the field_sets block and disabling the default inline_field_sets block.
+#}
+
+{% block field_sets %}
+    {# Inlines first #}
+    {% for inline_admin_formset in inline_admin_formsets %}
+        {% if request.headers.hx_request  %}
+            {% if inline_admin_formset.formset.get_pagination_key in request.GET %}
+                {% include inline_admin_formset.opts.template %}
+            {% endif %}
+        {% else %}
+            {% include inline_admin_formset.opts.template %}
+        {% endif %}
+    {% endfor %}
+
+    {# Then regular fieldsets (note) #}
+    {% with has_conditional_display=adminform.model_admin.conditional_fields %}
+        {% for fieldset in adminform %}
+            {% if "tab" not in fieldset.classes %}
+                {% include 'admin/includes/fieldset.html' %}
+            {% endif %}
+        {% endfor %}
+
+        {% include "unfold/helpers/fieldsets_tabs.html" %}
+    {% endwith %}
+{% endblock %}
+
+{% block inline_field_sets %}{% endblock %}

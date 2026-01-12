@@ -1,0 +1,110 @@
+{% extends "admin/base.html" %}
+
+{% load i18n unfold %}
+
+{% block content %}
+    <div class="mb-6">
+        <form method="get" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div class="flex-1">
+                <label class="block mb-1 text-sm font-medium" for="id_q">{% trans "Cari" %}</label>
+                <input id="id_q" type="text" name="q" value="{{ q }}" placeholder="{% trans 'SKU / Nama' %}" class="w-full max-w-xl border border-base-200 rounded-default px-3 py-2 bg-white dark:bg-base-900 dark:border-base-800" />
+            </div>
+
+            <label class="inline-flex items-center gap-2 text-sm">
+                <input type="checkbox" name="low" value="1" {% if low %}checked{% endif %} />
+                {% trans "Low stock" %}
+            </label>
+
+            <div class="flex gap-2">
+                <button type="submit" class="px-3 py-2 rounded-default bg-primary-600 text-white">
+                    {% trans "Filter" %}
+                </button>
+                <a class="px-3 py-2 rounded-default border border-base-200 dark:border-base-800" href="?{% if base_qs %}{{ base_qs }}&{% endif %}export=xlsx">
+                    {% trans "Export Excel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="-mx-1 px-1 overflow-x-auto lg:border lg:border-base-200 lg:mx-0 lg:px-0 lg:rounded-default lg:shadow-xs lg:dark:border-base-800 lg:bg-white lg:dark:bg-base-900" data-simplebar data-simplebar-auto-hide="false">
+        <table class="border-base-200 border-spacing-none border-separate w-full dark:border-base-800">
+            <thead>
+                <tr class="bg-white dark:bg-base-900">
+                    <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">
+                        <a class="underline" href="?{% if base_qs %}{{ base_qs }}&{% endif %}sort=sku&dir={% if sort == 'sku' and dir == 'asc' %}desc{% else %}asc{% endif %}">{% trans "SKU" %}</a>
+                    </th>
+                    <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">
+                        <a class="underline" href="?{% if base_qs %}{{ base_qs }}&{% endif %}sort=name&dir={% if sort == 'name' and dir == 'asc' %}desc{% else %}asc{% endif %}">{% trans "Nama" %}</a>
+                    </th>
+                    <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">
+                        <a class="underline" href="?{% if base_qs %}{{ base_qs }}&{% endif %}sort=category&dir={% if sort == 'category' and dir == 'asc' %}desc{% else %}asc{% endif %}">{% trans "Kategori" %}</a>
+                    </th>
+                    <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">
+                        <a class="underline" href="?{% if base_qs %}{{ base_qs }}&{% endif %}sort=uom&dir={% if sort == 'uom' and dir == 'asc' %}desc{% else %}asc{% endif %}">{% trans "Satuan" %}</a>
+                    </th>
+                    <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">
+                        <a class="underline" href="?{% if base_qs %}{{ base_qs }}&{% endif %}sort=qty&dir={% if sort == 'qty' and dir == 'asc' %}desc{% else %}asc{% endif %}">{% trans "Stok" %}</a>
+                    </th>
+                    <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">
+                        <a class="underline" href="?{% if base_qs %}{{ base_qs }}&{% endif %}sort=min_stock&dir={% if sort == 'min_stock' and dir == 'asc' %}desc{% else %}asc{% endif %}">{% trans "Stok minimum" %}</a>
+                    </th>
+                    <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">
+                        <a class="underline" href="?{% if base_qs %}{{ base_qs }}&{% endif %}sort=low_stock&dir={% if sort == 'low_stock' and dir == 'asc' %}desc{% else %}asc{% endif %}">{% trans "Low stock" %}</a>
+                    </th>
+                    <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">
+                        <a class="underline" href="?{% if base_qs %}{{ base_qs }}&{% endif %}sort=active&dir={% if sort == 'active' and dir == 'asc' %}desc{% else %}asc{% endif %}">{% trans "Aktif" %}</a>
+                    </th>
+                    <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">{% trans "Aksi" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                    <tr class="{% cycle 'bg-white dark:bg-base-900' 'bg-base-50 dark:bg-white/2' %}">
+                        <td class="p-3 border-b border-base-100 dark:border-base-800">{{ p.sku }}</td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800">{{ p.name }}</td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800">{{ p.category }}</td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800">{{ p.uom }}</td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800">{{ p.warehouse_qty }}</td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800">{{ p.min_stock }}</td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800">
+                            {% include "unfold/helpers/boolean.html" with value=p.low_stock %}
+                        </td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800">
+                            {% include "unfold/helpers/boolean.html" with value=p.is_active %}
+                        </td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800 whitespace-nowrap">
+                            <a class="underline" href="{% url 'admin_reports_stock_card' %}?product={{ p.id }}">{% trans "Riwayat" %}</a>
+                            <span class="mx-2 text-base-400">|</span>
+                            <a class="underline" href="{% url 'admin:master_product_change' p.id %}">{% trans "Edit min stock" %}</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr class="bg-white dark:bg-base-900">
+                        <td colspan="9" class="p-3">{% trans "No products." %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj and paginator and paginator.num_pages > 1 %}
+        <div class="mt-4 flex items-center justify-between text-sm">
+            <div>
+                {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ paginator.num_pages }}
+            </div>
+            <div class="flex gap-2">
+                {% if page_obj.has_previous %}
+                    <a class="px-3 py-2 rounded-default border border-base-200 dark:border-base-800" href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.previous_page_number }}">{% trans "Prev" %}</a>
+                {% else %}
+                    <span class="px-3 py-2 rounded-default border border-base-200 dark:border-base-800 opacity-50">{% trans "Prev" %}</span>
+                {% endif %}
+
+                {% if page_obj.has_next %}
+                    <a class="px-3 py-2 rounded-default border border-base-200 dark:border-base-800" href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+                {% else %}
+                    <span class="px-3 py-2 rounded-default border border-base-200 dark:border-base-800 opacity-50">{% trans "Next" %}</span>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
