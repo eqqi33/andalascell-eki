@@ -7,6 +7,65 @@ from django.db import models, transaction
 from master.models import Product, StockBalance, Warehouse, get_default_warehouse_id
 
 
+class ItemMovementMixin:
+    movement_type: str
+    is_in: bool
+    stock_relation: str
+
+    def _get_product_and_warehouse(self):
+        product = Product.objects.get(pk=self.product_id)
+        stock_obj = getattr(self, self.stock_relation)
+        warehouse = Warehouse.objects.select_for_update().get(pk=stock_obj.warehouse_id)
+        return product, warehouse, stock_obj
+
+    def _update_balance_and_movement(self, qty, delta, created_at, invoice_id, source_item_id):
+        from andalas_cell_test.andalas_cell_test.helper.stock import update_balance_and_movement
+        update_balance_and_movement(
+            movement_type=self.movement_type,
+            product=self._product,
+            warehouse=self._warehouse,
+            qty=qty,
+            delta=delta,
+            created_at=created_at,
+            invoice_id=invoice_id,
+            source_item_id=source_item_id,
+            is_in=self.is_in,
+            balance_model=StockBalance,
+            movement_model=StockMovement,
+        )
+
+    def save(self, *args, **kwargs) -> None:
+        old_qty = 0
+        if self.pk:
+            old_qty = (
+                self.__class__.objects.select_for_update()
+                .only("qty")
+                .get(pk=self.pk)
+                .qty
+            )
+        delta = int(self.qty) - int(old_qty)
+        self._product, self._warehouse, stock_obj = self._get_product_and_warehouse()
+        self._update_balance_and_movement(
+            qty=self.qty,
+            delta=delta,
+            created_at=stock_obj.created_at,
+            invoice_id=stock_obj.invoice_id,
+            source_item_id=self.pk,
+        )
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs) -> None:
+        self._product, self._warehouse, stock_obj = self._get_product_and_warehouse()
+        self._update_balance_and_movement(
+            qty=-self.qty,
+            delta=-self.qty,
+            created_at=stock_obj.created_at,
+            invoice_id=stock_obj.invoice_id,
+            source_item_id=self.pk,
+        )
+        StockMovement.objects.filter(movement_type=self.movement_type, source_item_id=self.pk).delete()
+        super().delete(*args, **kwargs)
+
 class StockDocument(models.Model):
     invoice_id = models.CharField(max_length=32, unique=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -33,7 +92,7 @@ class StockIn(StockDocument):
         editable=False,
     )
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         user = kwargs.pop('user', None)
         if user and not self.pk:
             self.created_by = user
@@ -74,7 +133,7 @@ class StockOut(StockDocument):
         editable=False,
     )
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         user = kwargs.pop('user', None)
         if user and not self.pk:
             self.created_by = user
@@ -132,7 +191,7 @@ class StockMovement(models.Model):
         return f"{self.created_at:%Y-%m-%d %H:%M} {self.product.sku} {sign}{self.qty}"
 
 
-class StockInItem(models.Model):
+class StockInItem(ItemMovementMixin, models.Model):
     stock_in = models.ForeignKey(StockIn, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name="stock_in_items")
     qty = models.PositiveIntegerField()
@@ -143,57 +202,12 @@ class StockInItem(models.Model):
     def __str__(self) -> str:
         return f"{self.stock_in.invoice_id} {self.product.sku} +{self.qty}"
 
-    def save(self, *args, **kwargs):
-        old_qty = 0
-        if self.pk:
-            old_qty = (
-                StockInItem.objects.select_for_update()
-                .only("qty")
-                .get(pk=self.pk)
-                .qty
-            )
-        delta = int(self.qty) - int(old_qty)
-        product = Product.objects.get(pk=self.product_id)
-        warehouse = Warehouse.objects.select_for_update().get(pk=self.stock_in.warehouse_id)
-        from andalas_cell_test.andalas_cell_test.helper.stock import update_balance_and_movement
-        update_balance_and_movement(
-            movement_type=StockMovement.TYPE_IN,
-            product=product,
-            warehouse=warehouse,
-            qty=self.qty,
-            delta=delta,
-            created_at=self.stock_in.created_at,
-            invoice_id=self.stock_in.invoice_id,
-            source_item_id=self.pk,
-            is_in=True,
-            balance_model=StockBalance,
-            movement_model=StockMovement,
-        )
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        product = Product.objects.get(pk=self.product_id)
-        warehouse = Warehouse.objects.select_for_update().get(pk=self.stock_in.warehouse_id)
-        from andalas_cell_test.andalas_cell_test.helper.stock import update_balance_and_movement
-        # Negative delta for delete
-        update_balance_and_movement(
-            movement_type=StockMovement.TYPE_IN,
-            product=product,
-            warehouse=warehouse,
-            qty=-self.qty,
-            delta=-self.qty,
-            created_at=self.stock_in.created_at,
-            invoice_id=self.stock_in.invoice_id,
-            source_item_id=self.pk,
-            is_in=True,
-            balance_model=StockBalance,
-            movement_model=StockMovement,
-        )
-        StockMovement.objects.filter(movement_type=StockMovement.TYPE_IN, source_item_id=self.pk).delete()
-        return super().delete(*args, **kwargs)
+    movement_type = StockMovement.TYPE_IN
+    is_in = True
+    stock_relation = "stock_in"
 
 
-class StockOutItem(models.Model):
+class StockOutItem(ItemMovementMixin, models.Model):
     stock_out = models.ForeignKey(StockOut, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name="stock_out_items")
     qty = models.PositiveIntegerField()
@@ -204,51 +218,6 @@ class StockOutItem(models.Model):
     def __str__(self) -> str:
         return f"{self.stock_out.invoice_id} {self.product.sku} -{self.qty}"
 
-    def save(self, *args, **kwargs):
-        old_qty = 0
-        if self.pk:
-            old_qty = (
-                StockOutItem.objects.select_for_update()
-                .only("qty")
-                .get(pk=self.pk)
-                .qty
-            )
-        delta = int(self.qty) - int(old_qty)
-        product = Product.objects.get(pk=self.product_id)
-        warehouse = Warehouse.objects.select_for_update().get(pk=self.stock_out.warehouse_id)
-        from andalas_cell_test.andalas_cell_test.helper.stock import update_balance_and_movement
-        update_balance_and_movement(
-            movement_type=StockMovement.TYPE_OUT,
-            product=product,
-            warehouse=warehouse,
-            qty=self.qty,
-            delta=delta,
-            created_at=self.stock_out.created_at,
-            invoice_id=self.stock_out.invoice_id,
-            source_item_id=self.pk,
-            is_in=False,
-            balance_model=StockBalance,
-            movement_model=StockMovement,
-        )
-        super().save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        product = Product.objects.get(pk=self.product_id)
-        warehouse = Warehouse.objects.select_for_update().get(pk=self.stock_out.warehouse_id)
-        from andalas_cell_test.andalas_cell_test.helper.stock import update_balance_and_movement
-        # Negative delta for delete
-        update_balance_and_movement(
-            movement_type=StockMovement.TYPE_OUT,
-            product=product,
-            warehouse=warehouse,
-            qty=-self.qty,
-            delta=-self.qty,
-            created_at=self.stock_out.created_at,
-            invoice_id=self.stock_out.invoice_id,
-            source_item_id=self.pk,
-            is_in=False,
-            balance_model=StockBalance,
-            movement_model=StockMovement,
-        )
-        StockMovement.objects.filter(movement_type=StockMovement.TYPE_OUT, source_item_id=self.pk).delete()
-        return super().delete(*args, **kwargs)
+    movement_type = StockMovement.TYPE_OUT
+    is_in = False
+    stock_relation = "stock_out"

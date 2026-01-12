@@ -36,21 +36,21 @@ class TimeStampedModel(models.Model):
 
 
 class SoftDeleteQuerySet(models.QuerySet):
-    def alive(self):
+    def alive(self) -> models.QuerySet:
         return self.filter(is_deleted=False)
 
-    def dead(self):
+    def dead(self) -> models.QuerySet:
         return self.filter(is_deleted=True)
 
-    def delete(self):
+    def delete(self) -> int:
         return super().update(is_deleted=True, deleted_at=timezone.now())
 
-    def hard_delete(self):
+    def hard_delete(self) -> int:
         return super().delete()
 
 
 class SoftDeleteManager(models.Manager):
-    def get_queryset(self):
+    def get_queryset(self) -> models.QuerySet:
         return SoftDeleteQuerySet(self.model, using=self._db).filter(is_deleted=False)
 
 
@@ -85,7 +85,7 @@ class SoftDeleteModel(TimeStampedModel):
     class Meta:
         abstract = True
 
-    def soft_delete(self, user=None):
+    def soft_delete(self, user=None) -> None:
         if self.is_deleted:
             return
         self.is_deleted = True
@@ -94,7 +94,7 @@ class SoftDeleteModel(TimeStampedModel):
             self.deleted_by = user
         self.save(update_fields=["is_deleted", "deleted_at", "deleted_by", "updated_at"])
 
-    def restore(self):
+    def restore(self) -> None:
         if not self.is_deleted:
             return
         self.is_deleted = False
@@ -102,12 +102,12 @@ class SoftDeleteModel(TimeStampedModel):
         self.deleted_by = None
         self.save(update_fields=["is_deleted", "deleted_at", "deleted_by", "updated_at"])
 
-    def delete(self, using=None, keep_parents=False, hard: bool = False):
+    def delete(self, using=None, keep_parents=False, hard: bool = False) -> None:
         if hard:
             return super().delete(using=using, keep_parents=keep_parents)
         self.soft_delete()
 
-    def hard_delete(self, using=None, keep_parents=False):
+    def hard_delete(self, using=None, keep_parents=False) -> int:
         return super().delete(using=using, keep_parents=keep_parents)
 
 

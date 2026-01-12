@@ -12,8 +12,31 @@ from .permissions import user_can_access_stock_movement
 from master.models import StockBalance, Warehouse
 
 
+class ProductReadonlyWidgetMixin:
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if db_field.name == "product" and formfield is not None:
+            widget = getattr(formfield, "widget", None)
+            targets = []
+            if widget is not None:
+                targets.append(widget)
+                from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
+                if isinstance(widget, RelatedFieldWidgetWrapper):
+                    targets.append(widget.widget)
+            for target in targets:
+                for attr, value in (
+                    ("can_add_related", False),
+                    ("can_change_related", False),
+                    ("can_delete_related", False),
+                    ("can_view_related", True),
+                ):
+                    if target is not None and hasattr(target, attr):
+                        setattr(target, attr, value)
+        return formfield
+
+
 class StockOutItemInlineFormSet(BaseInlineFormSet):
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
 
         # Kalau sudah ada error di form, nggak usah ditambah-tambah lagi
@@ -84,34 +107,10 @@ class StockOutItemInlineFormSet(BaseInlineFormSet):
                 form.add_error("qty", "Stok tidak cukup (stok akan menjadi minus).")
 
 
-class StockInItemInline(TabularInline):
+class StockInItemInline(ProductReadonlyWidgetMixin, TabularInline):
     model = StockInItem
     extra = 1
     autocomplete_fields = ("product",)
-
-    def formfield_for_dbfield(self, db_field, request, **kwargs):
-        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
-        if db_field.name == "product" and formfield is not None:
-            widget = getattr(formfield, "widget", None)
-            # Django bungkus widget FK pakai RelatedFieldWidgetWrapper setelah formfield_for_foreignkey
-            # Set flag di wrapper dan widget biar cuma ikon view yang muncul
-            targets = []
-            if widget is not None:
-                targets.append(widget)
-                if isinstance(widget, RelatedFieldWidgetWrapper):
-                    targets.append(widget.widget)
-
-            for target in targets:
-                for attr, value in (
-                    ("can_add_related", False),
-                    ("can_change_related", False),
-                    ("can_delete_related", False),
-                    ("can_view_related", True),
-                ):
-                    if target is not None and hasattr(target, attr):
-                        setattr(target, attr, value)
-
-        return formfield
 
 
 @admin.register(StockIn)
@@ -122,44 +121,22 @@ class StockInAdmin(ModelAdmin):
 
     fields = ("note",)
 
-    def save_model(self, request, obj, form, change):
+    def save_model(self, request, obj, form, change) -> None:
         wh = get_primary_warehouse()
         if wh is not None:
             obj.warehouse = wh
         obj.save(user=request.user)
         return super().save_model(request, obj, form, change)
 
-    def get_readonly_fields(self, request, obj=None):
+    def get_readonly_fields(self, request, obj=None) -> list[str]:
         return ["invoice_id", "created_at"]
 
 
-class StockOutItemInline(TabularInline):
+class StockOutItemInline(ProductReadonlyWidgetMixin, TabularInline):
     model = StockOutItem
     extra = 1
     autocomplete_fields = ("product",)
     formset = StockOutItemInlineFormSet
-
-    def formfield_for_dbfield(self, db_field, request, **kwargs):
-        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
-        if db_field.name == "product" and formfield is not None:
-            widget = getattr(formfield, "widget", None)
-            targets = []
-            if widget is not None:
-                targets.append(widget)
-                if isinstance(widget, RelatedFieldWidgetWrapper):
-                    targets.append(widget.widget)
-
-            for target in targets:
-                for attr, value in (
-                    ("can_add_related", False),
-                    ("can_change_related", False),
-                    ("can_delete_related", False),
-                    ("can_view_related", True),
-                ):
-                    if target is not None and hasattr(target, attr):
-                        setattr(target, attr, value)
-
-        return formfield
 
 
 @admin.register(StockOut)
@@ -170,14 +147,14 @@ class StockOutAdmin(ModelAdmin):
 
     fields = ("note",)
 
-    def save_model(self, request, obj, form, change):
+    def save_model(self, request, obj, form, change) -> None:
         wh = get_primary_warehouse()
         if wh is not None:
             obj.warehouse = wh
         obj.save(user=request.user)
         return super().save_model(request, obj, form, change)
 
-    def get_readonly_fields(self, request, obj=None):
+    def get_readonly_fields(self, request, obj=None) -> list[str]:
         return ["invoice_id", "created_at"]
 
 

@@ -4,14 +4,28 @@ from django.http import QueryDict
 from unfold.admin import ModelAdmin
 from unfold.widgets import UnfoldAdminTextareaWidget
 
+from .forms import StockBalanceAdminForm
+
 from andalas_cell_test.helper.admin_mixins import SuperuserReadOnlyAdminMixin
 from andalas_cell_test.helper.warehouses import get_primary_warehouse, get_primary_warehouse_id
 
 from .models import ActivityLog, Product, ProductCategory, StockBalance, UnitOfMeasure, Warehouse
 
-
 from andalas_cell_test.helper.admin_mixins import serialize_value
 
+
+class ProductReadonlyWidgetMixin:
+    @staticmethod
+    def set_product_widget_readonly(product_field):
+        widget = product_field.widget
+        for attr, value in (
+            ("can_add_related", False),
+            ("can_change_related", False),
+            ("can_delete_related", False),
+            ("can_view_related", True),
+        ):
+            if hasattr(widget, attr):
+                setattr(widget, attr, value)
 
 @admin.register(ActivityLog)
 class ActivityLogAdmin(SuperuserReadOnlyAdminMixin, ModelAdmin):
@@ -86,18 +100,6 @@ class StockBalanceAdmin(ModelAdmin):
     search_fields = ("product__sku", "product__name")
     autocomplete_fields = ("product",)
 
-    class StockBalanceAdminForm(forms.ModelForm):
-        activity_note = forms.CharField(
-            label="Catatan",
-            required=True,
-            widget=UnfoldAdminTextareaWidget(attrs={"rows": 3}),
-            help_text="Wajib diisi.",
-        )
-
-        class Meta:
-            model = StockBalance
-            fields = ("product", "qty_on_hand")
-
     form = StockBalanceAdminForm
     fields = ("product", "qty_on_hand", "activity_note")
 
@@ -108,7 +110,7 @@ class StockBalanceAdmin(ModelAdmin):
             return qs.none()
         return qs.filter(warehouse_id=wh_id)
 
-    def save_model(self, request, obj, form, change):
+    def save_model(self, request, obj, form, change) -> None:
         old = None
         if change and obj.pk:
             old = (
@@ -212,18 +214,7 @@ class StockBalanceAdmin(ModelAdmin):
         wh = get_primary_warehouse()
         if wh is not None and "product" in form.base_fields:
             product_field = form.base_fields["product"]
-
-            # Tampilkan aksi 'lihat terkait' saja untuk produk, sembunyikan ikon tambah/ubah/hapus
-            widget = product_field.widget
-            for attr, value in (
-                ("can_add_related", False),
-                ("can_change_related", False),
-                ("can_delete_related", False),
-                ("can_view_related", True),
-            ):
-                if hasattr(widget, attr):
-                    setattr(widget, attr, value)
-
+            ProductReadonlyWidgetMixin.set_product_widget_readonly(product_field)
             qs = product_field.queryset
             qs = qs.exclude(stock_balances__warehouse=wh, stock_balances__is_deleted=False)
             if obj is not None and obj.product_id:

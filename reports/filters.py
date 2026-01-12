@@ -16,7 +16,7 @@ from unfold.contrib.filters.forms import RangeDateForm
 from unfold.utils import parse_date_str
 
 
-def _parse_flexible_date(value: str | None):
+def _parse_flexible_date(value: str | None) -> datetime.date | None:
     """Bisa parsing tanggal dari berbagai format, misal 2024-01-01, 01-01-2024, 01/01/2024."""
     if not value:
         return None

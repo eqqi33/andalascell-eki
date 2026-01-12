@@ -14,7 +14,7 @@ def update_balance_and_movement(
     is_in,
     balance_model,
     movement_model,
-):
+) -> object:
     """
     Fungsi bantu buat update stok dan mutasi, dipakai StockInItem/StockOutItem.
     Kalau stok jadi minus, langsung error.
