@@ -31,11 +31,15 @@ erDiagram
     AUTH_USER ||--o{ STOCK_BALANCE : mengubah
     AUTH_USER ||--o{ STOCK_BALANCE : menghapus
 
+    AUTH_USER ||--o{ STOCK_IN : membuat
+    AUTH_USER ||--o{ STOCK_OUT : membuat
+
     STOCK_IN {
         bigint id PK
         string invoice_id UK
         datetime created_at
         bigint warehouse_id FK
+        bigint created_by_id FK
         text note
     }
 
@@ -44,6 +48,7 @@ erDiagram
         string invoice_id UK
         datetime created_at
         bigint warehouse_id FK
+        bigint created_by_id FK
         text note
     }
 
@@ -107,7 +112,7 @@ erDiagram
         bigint product_id FK
         int qty
         string invoice_id
-        int source_item_id
+        bigint source_item_id
     }
 
     STOCK_BALANCE {
