@@ -35,36 +35,38 @@ class ItemMovementMixin:
         )
 
     def save(self, *args, **kwargs) -> None:
-        old_qty = 0
-        if self.pk:
-            old_qty = (
-                self.__class__.objects.select_for_update()
-                .only("qty")
-                .get(pk=self.pk)
-                .qty
+        with transaction.atomic():
+            old_qty = 0
+            if self.pk:
+                old_qty = (
+                    self.__class__.objects.select_for_update()
+                    .only("qty")
+                    .get(pk=self.pk)
+                    .qty
+                )
+            delta = int(self.qty) - int(old_qty)
+            self._product, self._warehouse, stock_obj = self._get_product_and_warehouse()
+            self._update_balance_and_movement(
+                qty=self.qty,
+                delta=delta,
+                created_at=stock_obj.created_at,
+                invoice_id=stock_obj.invoice_id,
+                source_item_id=self.pk,
             )
-        delta = int(self.qty) - int(old_qty)
-        self._product, self._warehouse, stock_obj = self._get_product_and_warehouse()
-        self._update_balance_and_movement(
-            qty=self.qty,
-            delta=delta,
-            created_at=stock_obj.created_at,
-            invoice_id=stock_obj.invoice_id,
-            source_item_id=self.pk,
-        )
-        super().save(*args, **kwargs)
+            super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs) -> None:
-        self._product, self._warehouse, stock_obj = self._get_product_and_warehouse()
-        self._update_balance_and_movement(
-            qty=-self.qty,
-            delta=-self.qty,
-            created_at=stock_obj.created_at,
-            invoice_id=stock_obj.invoice_id,
-            source_item_id=self.pk,
-        )
-        StockMovement.objects.filter(movement_type=self.movement_type, source_item_id=self.pk).delete()
-        super().delete(*args, **kwargs)
+        with transaction.atomic():
+            self._product, self._warehouse, stock_obj = self._get_product_and_warehouse()
+            self._update_balance_and_movement(
+                qty=-self.qty,
+                delta=-self.qty,
+                created_at=stock_obj.created_at,
+                invoice_id=stock_obj.invoice_id,
+                source_item_id=self.pk,
+            )
+            StockMovement.objects.filter(movement_type=self.movement_type, source_item_id=self.pk).delete()
+            super().delete(*args, **kwargs)
 
 class StockDocument(models.Model):
     invoice_id = models.CharField(max_length=32, unique=True, editable=False)
