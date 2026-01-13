@@ -45,6 +45,9 @@ class ItemMovementMixin:
                     .qty
                 )
             delta = int(self.qty) - int(old_qty)
+            super().save(*args, **kwargs)
+
+            # Pastikan PK sudah ada (penting untuk StockMovement.source_item_id)
             self._product, self._warehouse, stock_obj = self._get_product_and_warehouse()
             self._update_balance_and_movement(
                 qty=self.qty,
@@ -53,13 +56,12 @@ class ItemMovementMixin:
                 invoice_id=stock_obj.invoice_id,
                 source_item_id=self.pk,
             )
-            super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs) -> None:
         with transaction.atomic():
             self._product, self._warehouse, stock_obj = self._get_product_and_warehouse()
             self._update_balance_and_movement(
-                qty=-self.qty,
+                qty=self.qty,
                 delta=-self.qty,
                 created_at=stock_obj.created_at,
                 invoice_id=stock_obj.invoice_id,
