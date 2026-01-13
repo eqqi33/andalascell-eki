@@ -13,9 +13,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         User = get_user_model()
-        username = os.environ.get("DJANGO_SUPERUSER_USERNAME", "admin@admin.com")
-        email = os.environ.get("DJANGO_SUPERUSER_EMAIL", username)
-        password = os.environ.get("DJANGO_SUPERUSER_PASSWORD", "admin123")
+        username = os.environ.get("DJANGO_SUPERUSER_USERNAME", "administrator")
+        email = os.environ.get("DJANGO_SUPERUSER_EMAIL", "admin@admin.com")
+        password = os.environ.get("DJANGO_SUPERUSER_PASSWORD", "Andalas2025Test")
 
         user, _created = User.objects.get_or_create(
             username=username, defaults={"is_staff": True, "is_superuser": True}
