@@ -1,13 +1,7 @@
 import copy
-from datetime import datetime, time
-
 from django.contrib import admin
-from django.core.paginator import Paginator
-from django.db.models import BooleanField, Case, F, IntegerField, OuterRef, Q, Subquery, Sum, Value, When
+from django.db.models import BooleanField, Case, F, IntegerField, OuterRef, Q, Subquery, Value, When
 from django.db.models.functions import Coalesce
-from django.http import HttpResponse
-from django.template.response import TemplateResponse
-from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.html import format_html
 from django.views import View
@@ -20,12 +14,12 @@ from unfold.views import BaseAutocompleteView
 from andalas_cell_test.helper.admin_mixins import StaffReadOnlyAdminMixin
 from andalas_cell_test.helper.warehouses import get_primary_warehouse_id
 
-from inventory.models import StockMovement
-from master.models import StockBalance, Warehouse
+from master.models import StockBalance
 from master.models import Product
 
-from .admin import StockCardMovementAdmin
 from .models import ReportProduct, ReportStockCardMovement
+
+
 class ProductAutocompleteView(BaseAutocompleteView):
     model = Product
     paginate_by = 20
@@ -41,17 +35,6 @@ class ProductAutocompleteView(BaseAutocompleteView):
         if term:
             qs = qs.filter(Q(sku__icontains=term) | Q(name__icontains=term))
         return qs
-
-
-class StockCardListView(View):
-    """Kartu Stok dibuat pakai changelist admin biasa.
-
-    Pakai filter sidebar Unfold (autocomplete + rentang tanggal) dan layout changelist admin Unfold.
-    """
-
-    def get(self, request, *args, **kwargs):
-        report_admin = StockCardMovementAdmin(ReportStockCardMovement, admin.site)
-        return report_admin.changelist_view(request)
 
 
 class ProductReportAdmin(StaffReadOnlyAdminMixin, ModelAdmin):
@@ -157,7 +140,7 @@ class ProductReportAdmin(StaffReadOnlyAdminMixin, ModelAdmin):
                     p.name,
                     str(p.category),
                     str(p.uom),
-                    f"{qty} ({_('Stok Rendah')} · {_('Minimal')} {min_stock})" if is_low else qty,
+                    f"{qty} ({_('Stok Rendah')} - {_('Minimal')} {min_stock})" if is_low else qty,
                 ])
 
             response = HttpResponse(

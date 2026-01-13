@@ -28,5 +28,5 @@ class ReportStockCardMovement(StockMovement):
     class Meta:
         proxy = True
         app_label = "reports"
-        verbose_name = "Stock Card"
-        verbose_name_plural = "Stock Card"
+        verbose_name = _("Kartu Stok Produk")
+        verbose_name_plural = _("Kartu Stok Produk")

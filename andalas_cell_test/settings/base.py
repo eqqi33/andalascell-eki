@@ -228,7 +228,7 @@ UNFOLD = {
                 "collapsible": True,
                 "items": [
                     {"title": _("Daftar Produk"), "link": "/admin/reports/products/"},
-                    {"title": _("Kartu Stok Produk"), "link": "/admin/reports/stock-card/"},
+                    {"title": _("Kartu Stok Produk"), "link": "/admin/reports/reportstockcardmovement/"},
                 ],
             },
             {

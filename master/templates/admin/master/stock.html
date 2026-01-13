@@ -73,7 +73,7 @@
                             {% include "unfold/helpers/boolean.html" with value=p.is_active %}
                         </td>
                         <td class="p-3 border-b border-base-100 dark:border-base-800 whitespace-nowrap">
-                            <a class="underline" href="{% url 'admin_reports_stock_card' %}?product={{ p.id }}">{% trans "Riwayat" %}</a>
+                            <a class="underline" href="{% url 'admin:reports_reportstockcardmovement_changelist' %}?product__id__exact={{ p.id }}">{% trans "Riwayat" %}</a>
                             <span class="mx-2 text-base-400">|</span>
                             <a class="underline" href="{% url 'admin:master_product_change' p.id %}">{% trans "Edit min stock" %}</a>
                         </td>

@@ -1,0 +1,54 @@
+{% load i18n %}
+
+<div class="mb-3">
+    <div class="text-sm text-base-500">{% trans "Produk" %}</div>
+    <div class="font-medium text-base-900 dark:text-base-100">{{ product.sku }} — {{ product.name }}</div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
+    <div class="p-3 rounded-default border border-base-200 dark:border-base-800">
+        <div class="text-xs uppercase text-base-500">{% trans "Saldo Awal" %}</div>
+        <div class="font-semibold">{{ opening_balance }}</div>
+    </div>
+    <div class="p-3 rounded-default border border-base-200 dark:border-base-800">
+        <div class="text-xs uppercase text-base-500">{% trans "Masuk" %}</div>
+        <div class="font-semibold">{{ period_in }}</div>
+    </div>
+    <div class="p-3 rounded-default border border-base-200 dark:border-base-800">
+        <div class="text-xs uppercase text-base-500">{% trans "Keluar" %}</div>
+        <div class="font-semibold">{{ period_out }}</div>
+    </div>
+    <div class="p-3 rounded-default border border-base-200 dark:border-base-800">
+        <div class="text-xs uppercase text-base-500">{% trans "Saldo Akhir" %}</div>
+        <div class="font-semibold">{{ closing_balance }}</div>
+    </div>
+</div>
+
+<div class="overflow-x-auto lg:border lg:border-base-200 lg:rounded-default lg:shadow-xs lg:dark:border-base-800 lg:bg-white lg:dark:bg-base-900">
+    <table class="border-base-200 border-spacing-none border-separate w-full dark:border-base-800">
+        <thead>
+            <tr class="bg-white dark:bg-base-900">
+                <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">{% trans "Tgl" %}</th>
+                <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">{% trans "Keterangan" %}</th>
+                <th class="font-medium p-3 text-right border-b border-base-100 dark:border-base-800">{% trans "Masuk" %}</th>
+                <th class="font-medium p-3 text-right border-b border-base-100 dark:border-base-800">{% trans "Keluar" %}</th>
+                <th class="font-medium p-3 text-right border-b border-base-100 dark:border-base-800">{% trans "Sisa" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in movements %}
+                <tr class="bg-white dark:bg-base-900">
+                    <td class="p-3 border-b border-base-100 dark:border-base-800 whitespace-nowrap">{{ m.created_at|date:"Y-m-d H:i" }}</td>
+                    <td class="p-3 border-b border-base-100 dark:border-base-800">{{ m.description }}</td>
+                    <td class="p-3 border-b border-base-100 dark:border-base-800 text-right">{{ m.in_qty }}</td>
+                    <td class="p-3 border-b border-base-100 dark:border-base-800 text-right">{{ m.out_qty }}</td>
+                    <td class="p-3 border-b border-base-100 dark:border-base-800 text-right font-semibold">{{ m.running_balance }}</td>
+                </tr>
+            {% empty %}
+                <tr class="bg-white dark:bg-base-900">
+                    <td colspan="5" class="p-3">{% trans "Tidak ada mutasi." %}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

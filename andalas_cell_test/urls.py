@@ -33,16 +33,6 @@ urlpatterns = [
         name="admin_reports_products",
     ),
     path(
-        "admin/reports/stock-card/",
-        admin.site.admin_view(report_views.StockCardListView.as_view()),
-        name="admin_reports_stock_card",
-    ),
-    path(
-        "admin/reports/stock-card/",
-        admin.site.admin_view(report_views.StockCardListView.as_view()),
-        name="reports_reportstockcardmovement_changelist",
-    ),
-    path(
         "admin/reports/product-autocomplete/",
         admin.site.admin_view(report_views.ProductAutocompleteView.as_view()),
         name="admin_reports_product_autocomplete",

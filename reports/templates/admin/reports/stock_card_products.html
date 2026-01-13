@@ -1,0 +1,133 @@
+{% extends "admin/base.html" %}
+
+{% load i18n crispy_forms_tags static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script src="{% url 'admin:jsi18n' %}"></script>
+    <script src="{% static 'admin/js/core.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="mb-6">
+        <h1 class="text-2xl font-semibold text-base-900 dark:text-base-100">Stock Card</h1>
+        <p class="text-sm text-base-500">{% trans "Kartu stok per produk. Buka detail untuk melihat mutasi." %}</p>
+    </div>
+
+    <div class="mb-6">
+        {{ form.media }}
+        <form method="get" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div class="flex-1 min-w-[16rem]">
+                {{ form.product.label_tag }}
+                <div class="mt-1">{{ form.product }}</div>
+            </div>
+
+            <div class="min-w-[12rem]">
+                {{ form.date_from.label_tag }}
+                <div class="mt-1">{{ form.date_from }}</div>
+            </div>
+
+            <div class="min-w-[12rem]">
+                {{ form.date_to.label_tag }}
+                <div class="mt-1">{{ form.date_to }}</div>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit" class="px-3 py-2 rounded-default bg-primary-600 text-white">
+                    {% trans "Filter" %}
+                </button>
+                <a class="px-3 py-2 rounded-default border border-base-200 dark:border-base-800" href="?">
+                    {% trans "Reset" %}
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="-mx-1 px-1 overflow-x-auto lg:border lg:border-base-200 lg:mx-0 lg:px-0 lg:rounded-default lg:shadow-xs lg:dark:border-base-800 lg:bg-white lg:dark:bg-base-900" data-simplebar data-simplebar-auto-hide="false">
+        <table class="border-base-200 border-spacing-none border-separate w-full dark:border-base-800">
+            <thead>
+                <tr class="bg-white dark:bg-base-900">
+                    <th class="font-medium p-3 text-left border-b border-base-100 dark:border-base-800">{% trans "Produk" %}</th>
+                    <th class="font-medium p-3 text-right border-b border-base-100 dark:border-base-800">{% trans "Saldo Awal" %}</th>
+                    <th class="font-medium p-3 text-right border-b border-base-100 dark:border-base-800">{% trans "Masuk" %}</th>
+                    <th class="font-medium p-3 text-right border-b border-base-100 dark:border-base-800">{% trans "Keluar" %}</th>
+                    <th class="font-medium p-3 text-right border-b border-base-100 dark:border-base-800">{% trans "Saldo Akhir" %}</th>
+                    <th class="font-medium p-3 text-center border-b border-base-100 dark:border-base-800">{% trans "Detail" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr class="{% cycle 'bg-white dark:bg-base-900' 'bg-base-50 dark:bg-white/2' %}">
+                        <td class="p-3 border-b border-base-100 dark:border-base-800">
+                            <div class="font-medium">{{ row.product.sku }} — {{ row.product.name }}</div>
+                        </td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800 text-right">{{ row.opening_balance }}</td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800 text-right">{{ row.period_in }}</td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800 text-right">{{ row.period_out }}</td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800 text-right font-semibold">{{ row.closing_balance }}</td>
+                        <td class="p-3 border-b border-base-100 dark:border-base-800 text-center">
+                            <button
+                                type="button"
+                                class="px-3 py-2 rounded-default border border-base-200 dark:border-base-800"
+                                data-stockcard-toggle="{{ row.product.id }}"
+                                data-stockcard-url="{{ row.detail_url }}"
+                            >
+                                {% trans "Detail" %}
+                            </button>
+                        </td>
+                    </tr>
+                    <tr id="stockcard-detail-row-{{ row.product.id }}" class="hidden bg-white dark:bg-base-900">
+                        <td colspan="6" class="p-3 border-b border-base-100 dark:border-base-800">
+                            <div id="stockcard-detail-{{ row.product.id }}" class="text-sm text-base-500">
+                                {% trans "Klik Detail untuk memuat data..." %}
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr class="bg-white dark:bg-base-900">
+                        <td colspan="6" class="p-3">{% trans "Tidak ada data." %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        (function () {
+            async function loadDetail(productId, url) {
+                const container = document.getElementById(`stockcard-detail-${productId}`);
+                if (!container) return;
+
+                if (container.dataset.loaded === "1") return;
+
+                container.textContent = "Loading...";
+                try {
+                    const resp = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
+                    const html = await resp.text();
+                    container.innerHTML = html;
+                    container.dataset.loaded = "1";
+                } catch (e) {
+                    container.textContent = "Gagal memuat detail.";
+                }
+            }
+
+            document.addEventListener("click", async (ev) => {
+                const btn = ev.target.closest("[data-stockcard-toggle]");
+                if (!btn) return;
+
+                const productId = btn.getAttribute("data-stockcard-toggle");
+                const url = btn.getAttribute("data-stockcard-url");
+
+                const row = document.getElementById(`stockcard-detail-row-${productId}`);
+                if (!row) return;
+
+                const isHidden = row.classList.contains("hidden");
+                row.classList.toggle("hidden");
+
+                if (isHidden) {
+                    await loadDetail(productId, url);
+                }
+            });
+        })();
+    </script>
+{% endblock %}
