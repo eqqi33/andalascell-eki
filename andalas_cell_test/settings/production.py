@@ -16,7 +16,7 @@ DEBUG = False
 # In production, require a secret key from the environment.
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
-ALLOWED_HOSTS = _env_csv("DJANGO_ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = ["*"]
 
 # Security best-practices (minimal)
 CSRF_COOKIE_SECURE = True  # Wajib jika pakai HTTPS
@@ -28,3 +28,6 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
