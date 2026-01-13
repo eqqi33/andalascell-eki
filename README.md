@@ -28,6 +28,7 @@ python manage.py runserver
 
 Buka:
 - Admin: http://127.0.0.1:8000/admin/
+- Admin (Railway/Production): https://andalascell-eki-production.up.railway.app/admin
 - Laporan produk: http://127.0.0.1:8000/admin/reports/products/
 - Laporan kartu stok: http://127.0.0.1:8000/admin/reports/stock-card/
 
