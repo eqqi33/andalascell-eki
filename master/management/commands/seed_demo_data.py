@@ -8,118 +8,42 @@ from django.utils import timezone
 from inventory.models import StockIn, StockInItem, StockOut, StockOutItem
 from master.models import DEFAULT_WAREHOUSE_CODE, Product, ProductCategory, StockBalance, UnitOfMeasure, Warehouse
 
-
-
 class Command(BaseCommand):
     help = "Seed a lot of demo data (categories, UoM, products, stock ins/outs) for testing reports."
-
-    def handle(self, *args, **options):
-        # Create admin test account
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        admin_username = "administrator"
-        admin_password = "Andalas2025Test"
-        admin_email = "administrator@andalas.local"
-        admin_user, created = User.objects.get_or_create(username=admin_username, defaults={"email": admin_email})
-        if created or not admin_user.is_superuser:
-            admin_user.is_staff = True
-            admin_user.is_superuser = True
-            admin_user.set_password(admin_password)
-            admin_user.save()
-            self.stdout.write(self.style.SUCCESS(f"Akun admin uji dibuat: {admin_username} / {admin_password}"))
-
-        rng = random.Random(options["seed"])
-        theme = options["theme"]
-
-        Warehouse.objects.get_or_create(
-            code=DEFAULT_WAREHOUSE_CODE,
-            defaults={"name": "Main Warehouse", "is_active": True},
-        )
-
-        categories_count = max(1, options["categories"])
-        products_count = max(1, options["products"])
-        days = max(1, options["days"])
-        stock_in_docs = max(0, options["ins"])
-        stock_out_docs = max(0, options["outs"])
-        items_min = max(1, options["items_min"])
-        items_max = max(items_min, options["items_max"])
-
-        if options["purge"] and options["reset"]:
-            raise SystemExit("Use only one of --reset or --purge")
-
-        with transaction.atomic():
-            if options["purge"]:
-                self.stdout.write(self.style.WARNING("Purging inventory + master data..."))
-                StockMovementDelete.delete_all()
-                Product.objects.all().delete()
-                ProductCategory.objects.all().delete()
-                UnitOfMeasure.objects.all().delete()
-            elif options["reset"]:
-                self.stdout.write(self.style.WARNING("Resetting inventory data..."))
-                StockMovementDelete.delete_all()
-                StockBalance.objects.update(qty_on_hand=0)
-
-            if theme == "phones":
-                categories = self._ensure_phone_categories()
-                uoms = self._ensure_phone_uoms()
-                products = self._ensure_phone_products(products_count, categories, uoms, rng)
-            else:
-                categories = self._ensure_categories(categories_count)
-                uoms = self._ensure_uoms()
-                products = self._ensure_products(products_count, categories, uoms)
-
-        def create_doc_with_items(doc_cls, item_cls, note, products, rng, items_min, items_max, days, created_items_counter, qty_max=120, warehouse=None):
-            created_at = self._random_datetime_within_days(rng, days)
-            doc = doc_cls.objects.create(note=note)
-            doc_cls.objects.filter(pk=doc.pk).update(created_at=created_at)
-            doc.refresh_from_db(fields=["created_at", "invoice_id"])
-            k = rng.randint(items_min, items_max)
-            picked = rng.sample(products, k=min(k, len(products)))
-            for product in picked:
-                qty = rng.randint(1, qty_max)
-                kwargs = {"product": product, item_cls._meta.model_name.split("item")[0] + "": doc}
-                if warehouse:
-                    kwargs["warehouse"] = warehouse
-                item_cls.objects.create(**kwargs, qty=qty)
-                created_items_counter[0] += 1
-
-        created_in_items = [0]
-        created_out_items = [0]
-
-        for _ in range(stock_in_docs):
-            create_doc_with_items(StockIn, StockInItem, "Seeded stock in", products, rng, items_min, items_max, days, created_in_items)
-
-        default_wh = Warehouse.objects.filter(code=DEFAULT_WAREHOUSE_CODE).only("id").first()
-        for _ in range(stock_out_docs):
-            available = list(
-                Product.objects.filter(stock_balances__warehouse=default_wh, stock_balances__qty_on_hand__gt=0)
-                .distinct()
-                .order_by("?")[: items_max * 3]
-            )
-            if not available:
-                continue
-            def pick_qty(product):
-                bal = StockBalance.objects.filter(product=product, warehouse=default_wh).only("qty_on_hand").first()
-                return rng.randint(1, min(int(bal.qty_on_hand), 80)) if bal and int(bal.qty_on_hand) > 0 else None
-            created_at = self._random_datetime_within_days(rng, days)
-            stock_out = StockOut.objects.create(note="Seeded stock out")
-            StockOut.objects.filter(pk=stock_out.pk).update(created_at=created_at)
-            stock_out.refresh_from_db(fields=["created_at", "invoice_id"])
-            k = rng.randint(items_min, items_max)
-            picked = available[: min(k, len(available))]
-            for product in picked:
-                qty = pick_qty(product)
-                if qty:
-                    StockOutItem.objects.create(stock_out=stock_out, product=product, qty=qty)
-                    created_out_items[0] += 1
-
-        self.stdout.write(self.style.SUCCESS("Seed completed."))
-        self.stdout.write(
-            f"Created: categories={ProductCategory.objects.count()}, uoms={UnitOfMeasure.objects.count()}, products={Product.objects.count()}, stock_in_items={created_in_items[0]}, stock_out_items={created_out_items[0]}"
-        )
         
     def add_arguments(self, parser):
         parser.add_argument("--seed", type=int, default=42)
+        parser.add_argument(
+            "--no-create-admin",
+            action="store_false",
+            dest="create_admin",
+            default=True,
+            help="Do not create/update the demo admin user.",
+        )
+        parser.add_argument(
+            "--admin-username",
+            type=str,
+            default="administrator",
+            help="Demo admin username.",
+        )
+        parser.add_argument(
+            "--admin-password",
+            type=str,
+            default="Andalas2025Test",
+            help="Demo admin password (only set on create unless --admin-reset-password).",
+        )
+        parser.add_argument(
+            "--admin-email",
+            type=str,
+            default="administrator@andalas.local",
+            help="Demo admin email.",
+        )
+        parser.add_argument(
+            "--admin-reset-password",
+            action="store_true",
+            default=False,
+            help="Reset the demo admin password to --admin-password.",
+        )
         parser.add_argument(
             "--theme",
             type=str,
@@ -146,6 +70,48 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if options.get("create_admin", True):
+            from django.contrib.auth import get_user_model
+
+            User = get_user_model()
+            admin_username = options["admin_username"]
+            admin_password = options["admin_password"]
+            admin_email = options["admin_email"]
+
+            admin_user, created = User.objects.get_or_create(
+                username=admin_username,
+                defaults={"email": admin_email},
+            )
+            changed_fields = []
+            if getattr(admin_user, "email", None) != admin_email:
+                admin_user.email = admin_email
+                changed_fields.append("email")
+            if not admin_user.is_staff:
+                admin_user.is_staff = True
+                changed_fields.append("is_staff")
+            if not admin_user.is_superuser:
+                admin_user.is_superuser = True
+                changed_fields.append("is_superuser")
+
+            if created or options.get("admin_reset_password", False):
+                admin_user.set_password(admin_password)
+                admin_user.save()
+            elif changed_fields:
+                admin_user.save(update_fields=changed_fields)
+
+            if created:
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"Akun admin uji dibuat: {admin_username} / {admin_password}"
+                    )
+                )
+            elif options.get("admin_reset_password", False):
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Password admin uji di-reset: {admin_username} / {admin_password}"
+                    )
+                )
+
         rng = random.Random(options["seed"])
         theme = options["theme"]
 
