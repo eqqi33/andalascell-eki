@@ -19,7 +19,7 @@ class ItemMovementMixin:
         return product, warehouse, stock_obj
 
     def _update_balance_and_movement(self, qty, delta, created_at, invoice_id, source_item_id):
-        from andalas_cell_test.andalas_cell_test.helper.stock import update_balance_and_movement
+        from andalas_cell_test.helper.stock import update_balance_and_movement
         update_balance_and_movement(
             movement_type=self.movement_type,
             product=self._product,
